@@ -1,44 +1,13 @@
 package com.kushtal.client
 
+import com.kushtal.model.JsonSupport
 import java.time._
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
-
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.marshalling.Marshal
-import akka.http.scaladsl.model._
 import akka.stream.ActorMaterializer
-import akka.stream.scaladsl.Flow
-import com.kushtal.model.JsonSupport
-
-import scala.concurrent.{Await, ExecutionContext, Future, Promise}
-import scala.concurrent.ExecutionContext.Implicits.global
-import spray.json.DefaultJsonProtocol._
-import com.kushtal.model._
-import akka.actor.ActorSystem
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.marshalling.Marshal
-import akka.http.scaladsl.unmarshalling.Unmarshal
-import akka.http.scaladsl.model._
-import akka.stream.{ActorMaterializer, OverflowStrategy}
-import akka.stream.scaladsl._
-
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.util.{Failure, Random, Success}
-import spray.json.DefaultJsonProtocol._
-import akka.actor.ActorSystem
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.marshalling.Marshal
-import akka.http.scaladsl.model._
-import akka.http.scaladsl.unmarshalling.Unmarshal
-import akka.stream.ActorMaterializer
-import akka.stream.scaladsl._
-import scala.concurrent.duration.Duration
-
-//import concurrent.ExecutionContext.Implicits.global
-import concurrent.duration._
-import scala.io.StdIn
+import scala.concurrent.{ExecutionContext, Future}
 
 
 object Main extends App with Requests with JsonSupport {
