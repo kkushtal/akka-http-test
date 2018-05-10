@@ -126,14 +126,16 @@ object Database {
 
   def makeTransacts(transacts: List[Transact]): Future[Error] = DB futureLocalTx { implicit session =>
     Future {
-      val accIds = transacts.flatMap { t =>
-        val fromAccId = getAccountId(Account.transactFrom(t))
-        val toAccId = getOrCreateAccountId(Account.transactTo(t))
+      val accounts = transacts.flatMap { t =>
+        val fromAcc = Account.transactFrom(t)
+        val toAcc = Account.transactTo(t)
+        List(fromAcc -> t.Amount * -1, toAcc -> t.Amount)
+      }.sortBy { case (acc, _) => (acc.userInfoId, acc.currency, acc.accountType) }
 
-        List(fromAccId -> t.Amount * -1, toAccId -> t.Amount)
-      }.sorted //.sortBy(_._1)
-
-      accIds.foreach { case (accId, amount) => updateBalance(accId, amount) }
+      accounts.foreach { case (acc, amount) =>
+        val accId = if (amount > 0) getOrCreateAccountId(acc) else getAccountId(acc)
+        updateBalance(accId, amount)
+      }
       Error(error = false)
     }
   }

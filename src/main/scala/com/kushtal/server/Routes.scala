@@ -19,14 +19,14 @@ trait Routes extends JsonSupport {
   val routes: Route = {
     (get & path("getbalance" / LongNumber / Segment / Segment)) { (userInfoId, currency, accountType) =>
       val account = Account.byMinimals(userInfoId, currency, accountType)
-      complete(Database.getBalance(account))
+      complete(OK -> Database.getBalance(account))
     } ~
       (get & path("getbalances" / LongNumber)) { userinfoid =>
-        complete(Database.getBalances(userinfoid))
+        complete(OK -> Database.getBalances(userinfoid))
       } ~
       (post & path("transact") & entity(as[List[Transact]])) { transacts =>
         onSuccess(Database.makeTransacts(transacts)) { error =>
-          complete(error)
+          complete(OK -> error)
         }
       }
   }
