@@ -3,14 +3,15 @@ package com.kushtal.client
 import com.kushtal.model._
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
+import akka.http.scaladsl.model._
 import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.unmarshalling.Unmarshal
-import akka.http.scaladsl.model._
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl._
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.util.{Failure, Random, Success}
+import scala.concurrent.duration.Duration
+import scala.util.{Failure, Success, Random}
 import spray.json.DefaultJsonProtocol._
 
 
@@ -55,35 +56,39 @@ trait Requests extends JsonSupport {
 
   /* ********** REQUESTS ********** */
 
-  private def sendRequest(number: Int, httpRequest: HttpRequest): Unit = {
-    val connectionFlow: Flow[HttpRequest, HttpResponse, Future[Http.OutgoingConnection]] =
-      Http().outgoingConnection(host = "localhost", port = 8080)
+  def getBalanceSendAwait(number: String)(implicit connectionFlow: Flow[HttpRequest, HttpResponse, Future[Http.OutgoingConnection]]): Unit = {
+    val uri: Uri = getRandomUriGetBalance
+    val req = HttpRequest(method = HttpMethods.GET, uri = uri)
+    requestSendAwait(number, req)
+  }
 
-    val futureResponse = for {
-      response <- Source.single(httpRequest).via(connectionFlow).runWith(Sink.head)
+  def postTrasactSendAwait(number: String)(implicit connectionFlow: Flow[HttpRequest, HttpResponse, Future[Http.OutgoingConnection]]): Unit = {
+    val uri: Uri = "/transact"
+    val transacts = getRandomTransacts
+
+    Marshal(transacts).to[RequestEntity] map { httpEntity =>
+      val req = HttpRequest(method = HttpMethods.POST, uri = uri, entity = httpEntity)
+      requestSendAwait(number, req)
+    }
+  }
+
+  private def requestSendAwait(number: String, request: HttpRequest)
+                              (implicit connectionFlow: Flow[HttpRequest, HttpResponse, Future[Http.OutgoingConnection]]): Unit = {
+    val start = System.currentTimeMillis()
+    val fResponse = for {
+      response <- Source.single(request).via(connectionFlow).runWith(Sink.head)
       entity <- Unmarshal(response.entity).to[String]
     } yield entity
 
-    futureResponse onComplete {
-      case Success(v) if printSuccess => println(s"$number: $v")
-      case Failure(f) if printFailure => println(s"$number: Failed: $f")
+    fResponse onComplete {
+      case Success(v) if printSuccess => printResponse(start, number, v)
+      case Failure(f) if printFailure => printResponse(start, s"FAIL $number", f)
     }
+    Await.ready(fResponse, Duration.Inf)
   }
 
-  def sendRequestGetBalance(number: Int): Unit = {
-    val uri = getRandomUriGetBalance
-    val httpRequest = HttpRequest(uri = uri)
-    sendRequest(number, httpRequest)
+  def printResponse(start: Long, number: String, data: Object): Unit = {
+    val end = System.currentTimeMillis()
+    println(s"$number: Result in ${end - start} millis: $data")
   }
-
-  def sendRequestTransact(number: Int): Unit = {
-    val uri: Uri = "/transact"
-    val transacts = getRandomTransacts
-    Marshal(transacts).to[RequestEntity] foreach {
-      httpEntity =>
-        val httpRequest = HttpRequest(method = HttpMethods.POST, uri = uri, entity = httpEntity)
-        sendRequest(number, httpRequest)
-    }
-  }
-
 }

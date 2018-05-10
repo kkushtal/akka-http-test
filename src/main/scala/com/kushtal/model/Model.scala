@@ -5,25 +5,45 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import spray.json.DefaultJsonProtocol._
 
 
-case class Account(accountid: Option[Long] = None, //*
+case class Account(accountId: Option[Long] = None, //*
                    account: Option[String] = None, //*
                    name: Option[String] = None, //*
-                   accounttype: Option[String] = None,
+                   accountType: Option[String] = None,
                    currency: Option[String] = None,
                    blocked: Option[Boolean] = None,
                    closed: Option[Boolean] = None,
-                   createdate: Option[ZonedDateTime] = None,
-                   closedate: Option[ZonedDateTime] = None,
+                   createDate: Option[ZonedDateTime] = None,
+                   closeDate: Option[ZonedDateTime] = None,
                    comment: Option[String] = None,
-                   userinfoid: Option[Long] = None, //*
+                   userInfoId: Option[Long] = None, //*
                    version: Option[Int] = None,
                    restriction: Option[String] = None,
                   )
 
-case class AccountBalance(accountbalanceid: Long,
-                          balancefact: BigDecimal,
-                          balanceplan: BigDecimal,
-                          balancedate: Option[ZonedDateTime] = None,
+object Account {
+  def byMinimals(userInfoId: Long, currency: String, accountType: String): Account = Account(
+    userInfoId = Some(userInfoId),
+    currency = Some(currency),
+    accountType = Some(accountType),
+  )
+
+  def transactFrom(transact: Transact): Account = byMinimals(
+    transact.UserInfoIdFrom,
+    transact.Currency,
+    transact.AccountTypeFrom,
+  )
+
+  def transactTo(transact: Transact): Account = byMinimals(
+    transact.UserInfoIdTo,
+    transact.Currency,
+    transact.AccountTypeTo
+  )
+}
+
+case class AccountBalance(accountBalanceId: Long,
+                          balanceFact: BigDecimal = 0,
+                          balancePlan: BigDecimal = 0,
+                          balanceDate: Option[ZonedDateTime] = None,
                           version: Option[Int] = None,
                          )
 
@@ -49,8 +69,7 @@ case class Error(error: Boolean,
 
 /* ********** ERRORS ********** */
 
-object Errors {
-
+object Error {
   def wrongBalance(accountId: Long): Error = Error(
     error = true,
     errorCode = Some("0"),
@@ -66,41 +85,15 @@ object Errors {
   def accountNotFound(account: Account): Error = Error(
     error = true,
     errorCode = Some("2"),
-    errorText = Some(s"Account not found; [UserInfoId: ${account.userinfoid.get}]")
+    errorText = Some(s"Account not found; [UserInfoId: ${account.userInfoId.get}]")
   )
 
   def canNotBeCreated(account: Account): Error = Error(
     error = true,
     errorCode = Some("3"),
-    errorText = Some(s"Account not found; [UserInfoId: ${account.userinfoid.get}]\n" +
-      s"Account can not be created [AccountId: ${account.accountid.get}"
+    errorText = Some(s"Account not found; [UserInfoId: ${account.userInfoId.get}]\n" +
+      s"Account can not be created [AccountId: ${account.accountId.get}"
     )
-  )
-}
-
-
-/* ********** CREATORS ********** */
-
-object Create {
-  def balance(accountId: Long): AccountBalance = AccountBalance(
-    accountbalanceid = accountId,
-    balancefact = 0,
-    balanceplan = 0,
-    version = Some(0)
-  )
-
-  def account(userInfoId: Long, currency: String, accountType: String): Account = Account(
-    userinfoid = Some(userInfoId),
-    currency = Some(currency),
-    accounttype = Some(accountType),
-  )
-
-  def account(inAccount: Account, accountId: Long, account: String): Account = inAccount.copy(
-    accountid = Some(accountId),
-    account = Some(account),
-    name = inAccount.currency,
-    comment = Some("Automatically created account"),
-    version = Some(0)
   )
 }
 
@@ -109,6 +102,6 @@ object Create {
 
 trait JsonSupport extends SprayJsonSupport {
   implicit val accountBalanceOuputJsonFormat = jsonFormat3(AccountBalanceOutput)
-  implicit val transactJsonFormat = jsonFormat7(Transact)
-  implicit val errorJsonFormat = jsonFormat3(Error)
+  implicit val transactJsonFormat = jsonFormat7(Transact.apply)
+  implicit val errorJsonFormat = jsonFormat3(Error.apply)
 }

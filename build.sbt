@@ -10,14 +10,15 @@ lazy val root = (project in file(".")).
     )),
     name := "akka-http-kushtal",
     libraryDependencies ++= Seq(
-	  "org.postgresql"    % "postgresql"                 % "42.2.2",
-	  "ch.qos.logback"    % "logback-classic"            % "1.2.3",
+	  "org.postgresql"    %  "postgresql"                % "42.2.2",
+	  "ch.qos.logback"    %  "logback-classic"           % "1.2.3",
 	  "org.scalikejdbc"   %% "scalikejdbc"               % scalikejdbcVersion,
 	  "org.scalikejdbc"   %% "scalikejdbc-interpolation" % scalikejdbcVersion,
 	  "org.scalikejdbc"   %% "scalikejdbc-config"        % scalikejdbcVersion,
 	  
       "com.typesafe.akka" %% "akka-http"                 % akkaHttpVersion,
       "com.typesafe.akka" %% "akka-http-spray-json"      % akkaHttpVersion,
-	  "com.typesafe.akka" %% "akka-http-caching"		 % akkaHttpVersion
+	  "com.typesafe.akka" %% "akka-http-caching"		 % akkaHttpVersion,
+	  "com.typesafe"      %  "config"                    % "1.3.2"
     )
   )
